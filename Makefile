@@ -14,4 +14,9 @@ CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES)
 LDFLAGS = -L${HADOOP_HOME}/libhdfs
 LDLIBS   = -lhdfs 
 
-all: hdfsls.o
+all: hdfsls
+
+.PHONY: clean
+
+clean:
+	rm -fv *.o hdfsls
