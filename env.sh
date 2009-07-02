@@ -9,9 +9,9 @@ LIBJVM_PATH=${JRE_PATH}/server/:${JRE_PATH}/client/
 
 HADOOP_HOME=/home/speed/tmacam/hadoop-64bits/hadoop/
 HADOOP_CONF_DIR=${HADOOP_HOME}/conf
-HADOOP_LIB_DIR=${HADOOP_HOME}/libhdfs
+HDFS_LIB_DIR=${HADOOP_HOME}/libhdfs
 
 export CLASSPATH=${HADOOP_CONF_DIR}:$(ls ${HADOOP_HOME}/hadoop*core*jar| head -1):$(find ${HADOOP_HOME}/lib -maxdepth 1 -name '*.jar' -print0| tr '\000' ':')
 
-export LD_LIBRARY_PATH=${LIBJVM_PATH}:${HADOOP_LIB_DIR}:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${LIBJVM_PATH}:${HDFS_LIB_DIR}:${LD_LIBRARY_PATH}
 
