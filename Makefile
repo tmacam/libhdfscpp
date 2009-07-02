@@ -16,7 +16,12 @@ LDLIBS   = -lhdfs
 
 all: hdfsls
 
-.PHONY: clean
+OBJECTS = hdfsls.o hdfscpp.o
+
+hdfsls: $(OBJECTS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $@
+
+.PHONY: clean all
 
 clean:
 	rm -fv *.o hdfsls
