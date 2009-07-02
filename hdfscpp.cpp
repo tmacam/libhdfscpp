@@ -7,35 +7,8 @@
 
 using namespace tmacam::hdfs;
 
-void FileSystem::GetPathInfo(const char* path, FileInfoList* info)
-{
-    assert(info);
+/**********************************************************************/
 
-    // Path is a directory, right?
-    hdfsFileInfo* path_info = hdfsGetPathInfo(fs_, path);
-    if (!path_info) {
-        std::string msg("Failed to get information about path '");
-        msg += path;
-        msg += "'.";
-        throw HDFSError(msg);
-    }
-    info->reset(path_info, 1);
-}
-
-void FileSystem::ListDirectory(const char* path, FileInfoList* info)
-{
-    assert(info);
-    int n_entries = 0;
-	hdfsFileInfo* entries = hdfsListDirectory(fs_, path, &n_entries);
-    if (!entries && errno) {
-        std::string msg("Error getting information about files in path '");
-        msg += path;
-        msg += "'.";
-        throw HDFSError(msg);
-    }
-
-    info->reset(entries, n_entries);
-}
 
 FileInfoList::FileInfoList():
     n_(0),
@@ -71,6 +44,35 @@ void FileInfoList::reset(hdfsFileInfo* entries, int num_entries)
     }
 }
 
+/**********************************************************************/
+
+
+File::File(hdfsFS fs, const char* path,  int flags, int bufferSize,
+        short replication, tSize blocksize) :
+    fs_(fs)
+{
+    fh_ = hdfsOpenFile(fs_,path, flags, bufferSize, replication, blocksize);
+    if (!fh_) {
+        std::string msg("Failed open path '");
+        msg += path;
+        msg += "'.";
+        throw HDFSError(msg);
+    }
+}
+
+
+tSize File::Read(void* buffer, tSize length)
+{
+    tSize result = hdfsRead(fs_, fh_, buffer, length);
+    if( result < 0 ) {
+        throw HDFSError("An error ocurred reading the file (hdfsRead()).");
+    }
+
+    return result;
+}
+
+/**********************************************************************/
+
 FileSystem::FileSystem(const char* host, tPort port) :
     fs_(hdfsConnect(host, port))
 {
@@ -86,5 +88,44 @@ FileSystem::~FileSystem() {
         }
     }
 }
+
+void FileSystem::GetPathInfo(const char* path, FileInfoList* info)
+{
+    assert(info);
+
+    // Path is a directory, right?
+    hdfsFileInfo* path_info = hdfsGetPathInfo(fs_, path);
+    if (!path_info) {
+        std::string msg("Failed to get information about path '");
+        msg += path;
+        msg += "'.";
+        throw HDFSError(msg);
+    }
+    info->reset(path_info, 1);
+}
+
+void FileSystem::ListDirectory(const char* path, FileInfoList* info)
+{
+    assert(info);
+    int n_entries = 0;
+	hdfsFileInfo* entries = hdfsListDirectory(fs_, path, &n_entries);
+    if (!entries && errno) {
+        std::string msg("Error getting information about files in path '");
+        msg += path;
+        msg += "'.";
+        throw HDFSError(msg);
+    }
+
+    info->reset(entries, n_entries);
+}
+
+
+bool FileSystem::Exists(const char* path) 
+{
+    return bool(hdfsExists(fs_, path) == 0);
+}
+
+
+
 
 // vim: et ai sts=4 ts=4 sw=4

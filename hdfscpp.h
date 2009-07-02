@@ -52,6 +52,75 @@ private:
     DISALLOW_COPY_AND_ASSIGN(FileInfoList);
 };
 
+
+/**RAII-wrapper for hdfsFile handles
+ *
+ * XXX Our constructor and the form we use this class is not consistent
+ * with FileInfoList, i.e., there is no "uninitialized" state, you
+ * cannot open files directly from FileSystem instances, etc. But, you
+ * know what, this is way simpler and turning this into a auto_ptr like,
+ * with reset() methods and such.
+ *
+ */
+class File {
+public:
+    /**Default (and only) constructor.
+     *
+     * Open a hdfs file in given mode.
+     *
+     * @param fs The configured filesystem handle.
+     * @param path The full path to the file.
+     * @param flags Either O_RDONLY or O_WRONLY, for read-only or write-only.
+     * @param bufferSize Size of buffer for read/write - pass 0 if you want
+     * to use the default configured values.
+     * @param replication Block replication - pass 0 if you want to use
+     * the default configured values.
+     * @param blocksize Size of block - pass 0 if you want to use the
+     * default configured values.
+     *
+     * @throws HDFSError if we fail to open the file.
+     */
+
+    File(hdfsFS fs, const char* path,  int flags, int bufferSize=0,
+            short replication=0, tSize blocksize=0);
+
+
+    ~File() { hdfsCloseFile(fs_, fh_); }
+
+    //! Implicitly act as a hdfsFile handle
+    inline operator hdfsFile() { return fh_ ;};
+
+    /**Read data from an open file.
+     * @param buffer The buffer to copy read bytes into.
+     * @param length The length of the buffer.
+     * @return Returns the number of bytes actually read, possibly less
+     * than than length.
+     *
+     * @throw HDFSError on error.
+     */
+    tSize Read(void* buffer, tSize length);
+
+    /**Get the number of bytes that can be read from this
+     * input stream without blocking.
+     *
+     * @return Returns available bytes; -1 on error. 
+     */
+    int Available() { return hdfsAvailable(fs_, fh_); }
+
+
+
+private:
+    hdfsFS fs_;
+    hdfsFile fh_;
+
+    DISALLOW_COPY_AND_ASSIGN(File);
+    /** Default constructor is not available. Our only constructor is an
+     * improved wrapper for hdfsOpenFile().
+     */
+    File();
+};
+
+
 /***RAII-wrapper for hdfsFS handles
  */
 class FileSystem {
@@ -67,6 +136,12 @@ public:
     void GetPathInfo(const char* path, FileInfoList* info);
 
     void ListDirectory(const char* path, FileInfoList* info);
+
+    /**Checks if a given path exsits on the filesystem 
+     * @param path The path to look for
+     * @return Returns true on success, false on error.  
+     */
+    bool Exists(const char* path);
 
 private:
     hdfsFS fs_;

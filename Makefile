@@ -14,14 +14,16 @@ CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES)
 LDFLAGS = -L${HADOOP_HOME}/libhdfs
 LDLIBS   = -lhdfs 
 
-all: hdfsls
 
-OBJECTS = hdfsls.o hdfscpp.o
+all: hdfsls hdfsread
 
-hdfsls: $(OBJECTS)
-	$(CXX) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $@
+hdfsls: hdfsls.o hdfscpp.o
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+hdfsread: hdfsread.o hdfscpp.o
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 .PHONY: clean all
 
 clean:
-	rm -fv *.o hdfsls
+	rm -fv *.o hdfsls hdfsread
