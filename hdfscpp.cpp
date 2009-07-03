@@ -3,9 +3,12 @@
 #include <string>
 #include <assert.h>
 
+
 /**********************************************************************/
 
-using namespace tmacam::hdfs;
+namespace tmacam {
+namespace hdfs {
+
 
 /**********************************************************************/
 
@@ -126,6 +129,35 @@ bool FileSystem::Exists(const char* path)
 }
 
 
+/**********************************************************************/
+
+
+void GetFileBlockLocations(hdfsFS fs, const char* path, tOffset start,
+        tOffset size, BlockLocationList* blocks_location)
+{
+    BlockLocationList result;
+
+    char*** blocks_info = hdfsGetHosts(fs, path, start, size);
+    if(!blocks_info) {
+        throw HDFSError("hdfsGetHosts failed.");
+    }
+    for(size_t b = 0; blocks_info[b]; ++b) {
+        HostList hosts;
+        for(size_t h = 0; blocks_info[b][h]; ++h) {
+            hosts.push_back(std::string(blocks_info[b][h]));
+        }
+        result.push_back(hosts);
+    }
+    hdfsFreeHosts(blocks_info);
+
+    // Return the output swapping data with the input blocks_info
+    blocks_location->swap(result);
+
+}
+
+
+}; // namespace hdfs
+}; // namespace tmacam
 
 
 // vim: et ai sts=4 ts=4 sw=4

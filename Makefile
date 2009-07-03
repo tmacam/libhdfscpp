@@ -15,12 +15,15 @@ LDFLAGS = -L${HADOOP_HOME}/libhdfs
 LDLIBS   = -lhdfs 
 
 
-all: hdfsls hdfsread
+all: hdfsls hdfsread hdfslistblocks
 
 hdfsls: hdfsls.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 hdfsread: hdfsread.o hdfscpp.o
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+hdfslistblocks: hdfslistblocks.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 .PHONY: clean all

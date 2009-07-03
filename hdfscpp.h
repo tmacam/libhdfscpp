@@ -3,6 +3,9 @@
 
 #include <hdfs.h>
 #include <stdexcept>
+#include <vector>
+#include <string>
+
 
 // A macro to disallow the copy constructor and operator= functions
 // This should be used in the private: declarations for a class
@@ -13,6 +16,9 @@
 
 namespace tmacam {
 namespace hdfs {
+
+typedef std::vector<std::string> HostList;
+typedef std::vector<HostList> BlockLocationList;
 
 /*** Generic class to signal errors from HDFS run-time
  */
@@ -149,6 +155,24 @@ private:
 };
 
 
+/**Get hostnames where a particular block (determined by
+ * pos & blocksize) of a file is stored.
+ *
+ * Due to replication, a single block could be present on
+ * multiple hosts.
+ *
+ * @param fs The configured filesystem handle.
+ * @param path The path of the file. 
+ * @param start The start of the block.
+ * @param length The length of the block.
+ * @param blocks_location Where the resulting lists of block locations
+ * will be stored. Any information previously stored in the provided
+ * argument will be lost after the return of the function call.
+ *
+ * @throws HDFSError if anything goes wrong...
+ */
+void GetFileBlockLocations(hdfsFS fs, const char* path, tOffset start,
+        tOffset size, BlockLocationList* blocks_location);
 
 
 }; // namespace hdfs
