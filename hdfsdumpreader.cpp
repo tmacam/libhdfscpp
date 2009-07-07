@@ -76,6 +76,11 @@ int main(int argc, char* argv[])
 
     hdfs::File file(fs, path, O_RDONLY, buff_size, 0, 0);
     for (size_t bytes_read = 0; bytes_read < path_info->mSize;) {
+        /* Using Pread() and exceptions for doing this is ugly and lame.
+         * We should have used Read() and proper tests but, you know what,
+         * this works and is easy to understand -- and this scores +1 in
+         * my book.
+         */
         tSize read_length = file.Pread(bytes_read, &buff[0], buff_size);
         bytes_read += read_length;
 
@@ -87,12 +92,11 @@ int main(int argc, char* argv[])
             while (!available_data.eof()) {
                 // Save current progress
                 data_left_len = available_data.len();
-
+                // Read header, payload and CRC. Abort if payload is too big
                 int32_t payload_len = ReadInt(&available_data);
-                const char* payload_data = available_data.read(payload_len);
                 assert(payload_len + 2*sizeof(int32_t) < buff_size);
+                const char* payload_data = available_data.read(payload_len);
                 int32_t expected_checksum = ReadInt(&available_data);
-
 #ifndef DUMPREADER_FAST_PASS
                 // Calc CRC32
                 uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
@@ -103,8 +107,6 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 #endif
-
-                
                 std::cout << "P: " <<  payload_len << std::endl;
             }
         } catch(std::out_of_range) {
