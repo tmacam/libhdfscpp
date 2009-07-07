@@ -23,14 +23,150 @@ inline int32_t ReadInt(tmacam::filebuf* data) {
 
     
 /**********************************************************************/
-/*
+namespace tmacam {
+
 class HdfsDumpReader {
+public:
+    static const size_t kDefaultBufferSize =  10<<20; // 10 MB
+
+    HdfsDumpReader(hdfs::FileSystem* fs,
+                   const char* path,
+                   size_t buffer_size = kDefaultBufferSize);
+
+    bool HasNext();
+
+    tmacam::filebuf GetNext();
+
+    void ReadFile();
 private:
+    hdfs::FileSystem* fs_;
+    std::string path_;
+    hdfs::File file_;
+    tOffset file_size_;
+    size_t buffer_size_;
+    std::vector<char> buffer_;
+    // Used for iteration control and state-keeping
+    size_t bytes_read_;
+    tmacam::filebuf available_data_;
+    const tmacam::filebuf empty_file_buffer_;
+
     // No copy, no atribution and no default constructor for this class
     DISALLOW_COPY_AND_ASSIGN(HdfsDumpReader);
     HdfsDumpReader();
 };
-*/
+
+
+HdfsDumpReader::HdfsDumpReader(hdfs::FileSystem* fs, const char* path,
+                   size_t buffer_size) :
+    fs_(fs),
+    path_(path),
+    file_(*fs, path, O_RDONLY, buffer_size, 0, 0),
+    file_size_(0), // we will get to you in a momment, sir
+    buffer_size_(buffer_size),
+    buffer_(buffer_size),
+    bytes_read_(0),
+    available_data_(),
+    empty_file_buffer_()
+{
+    hdfs::FileInfoList file_info;
+    fs_->GetPathInfo(path, &file_info);
+    file_size_ = file_info->mSize;
+    std::cout << "Constructor " << file_.Available() << std::endl;
+}
+
+bool HdfsDumpReader::HasNext()
+{
+    // We won't be done untill we have read all the file and
+    // there is nothing left in available_data_ to be read.
+    return (bytes_read_ < file_size_) || !available_data_.eof();
+}
+
+tmacam::filebuf HdfsDumpReader::GetNext()
+{
+    // Missing closures?
+    /* First of all, remember that this code originally was  something along
+     * the lines:
+     *
+     * for (bytes_read_ = 0; bytes_read_ < file_size_;) {
+     *   (...)
+     *   try {
+     *      while(!available_data_.eof()) {
+     *          (...)
+     *          // yield data unit
+     *      }
+     *  } catch (std::out_of_range) {
+     *      (...)
+     *  }
+     *
+     * Missing closures now? 
+     *
+     * Using Pread() and exceptions for doing this is ugly and lame.
+     * We should have used Read() and proper tests but, you know what,
+     * this works and is easy to understand -- and this scores +1 in
+     * my book.
+     */
+
+    assert(HasNext()); // Simplify corner cases for the next if
+    // Do we need to perform a read operation? Can we perform a read?
+    if (available_data_.eof() && (bytes_read_ < file_size_)) {
+        tSize read_length = file_.Pread(bytes_read_, &buffer_[0], buffer_size_);
+        bytes_read_ += read_length;
+        available_data_ = tmacam::filebuf(&buffer_[0], read_length);
+    }
+
+    
+    return tmacam::filebuf();
+}
+
+void HdfsDumpReader::ReadFile()
+{
+    size_t data_left_len = 0;
+
+    for (bytes_read_ = 0; bytes_read_ < file_size_;) {
+        /* Using Pread() and exceptions for doing this is ugly and lame.
+         * We should have used Read() and proper tests but, you know what,
+         * this works and is easy to understand -- and this scores +1 in
+         * my book.
+         */
+        tSize read_length = file_.Pread(bytes_read_, &buffer_[0], buffer_size_);
+        bytes_read_ += read_length;
+
+        available_data_ = tmacam::filebuf(&buffer_[0], read_length);
+
+        std::cout << "READ " << read_length << std::endl;
+
+        try {
+            while (!available_data_.eof()) {
+                // Save current progress
+                data_left_len = available_data_.len();
+                // Read header, payload and CRC. Abort if payload is too big
+                int32_t payload_len = ReadInt(&available_data_);
+                assert(payload_len + 2*sizeof(int32_t) < buffer_size_);
+                const char* payload_data = available_data_.read(payload_len);
+                int32_t expected_checksum = ReadInt(&available_data_);
+#ifndef DUMPREADER_FAST_PASS
+                // Calc CRC32
+                uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
+                if (expected_checksum != static_cast<int32_t>(crc)) {
+                    std::cerr << "CRC MISSMATCH -- found " << crc << 
+                        " expected" << expected_checksum <<
+                        std::endl; 
+                    exit(EXIT_FAILURE);
+                }
+#endif
+                std::cout << "P: " <<  payload_len << std::endl;
+            }
+        } catch(std::out_of_range) {
+            std::cout << "ooops " <<  std::endl;
+            // not enough data... 
+            // rewind reading position
+            bytes_read_ -= data_left_len;
+        }
+    }
+}
+
+
+}; // namespace tmacam
 
 /**********************************************************************/
 
@@ -68,57 +204,11 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    /// BEGIN reader code
-    const size_t buff_size = 1<<20; // 1 MB
-    std::vector<char> buff(buff_size);
+    HdfsDumpReader reader(&fs, path);
 
-    size_t data_left_len = 0;
-
-    hdfs::File file(fs, path, O_RDONLY, buff_size, 0, 0);
-    for (size_t bytes_read = 0; bytes_read < path_info->mSize;) {
-        /* Using Pread() and exceptions for doing this is ugly and lame.
-         * We should have used Read() and proper tests but, you know what,
-         * this works and is easy to understand -- and this scores +1 in
-         * my book.
-         */
-        tSize read_length = file.Pread(bytes_read, &buff[0], buff_size);
-        bytes_read += read_length;
-
-        tmacam::filebuf available_data(&buff[0], read_length);
-
-        std::cout << "READ " << read_length << std::endl;
-
-        try {
-            while (!available_data.eof()) {
-                // Save current progress
-                data_left_len = available_data.len();
-                // Read header, payload and CRC. Abort if payload is too big
-                int32_t payload_len = ReadInt(&available_data);
-                assert(payload_len + 2*sizeof(int32_t) < buff_size);
-                const char* payload_data = available_data.read(payload_len);
-                int32_t expected_checksum = ReadInt(&available_data);
-#ifndef DUMPREADER_FAST_PASS
-                // Calc CRC32
-                uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
-                if (expected_checksum != static_cast<int32_t>(crc)) {
-                    std::cerr << "CRC MISSMATCH -- found " << crc << 
-                        " expected" << expected_checksum <<
-                        std::endl; 
-                    exit(EXIT_FAILURE);
-                }
-#endif
-                std::cout << "P: " <<  payload_len << std::endl;
-            }
-        } catch(std::out_of_range) {
-            std::cout << "ooops " <<  std::endl;
-            // not enough data... 
-            // rewind reading position
-            bytes_read -= data_left_len;
-        }
-    }
+    reader.ReadFile();
 
 
-    /// END reader code
     
 	return 0;
 }
