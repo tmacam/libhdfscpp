@@ -74,6 +74,18 @@ tSize File::Read(void* buffer, tSize length)
     return result;
 }
 
+
+tSize File::Pread(tOffset position, void* buffer, tSize length)
+{
+    tSize result = hdfsPread(fs_, fh_, position, buffer, length);
+    if( result < 0 ) {
+        throw HDFSError("An error ocurred reading the file (hdfsRead()).");
+    }
+
+    return result;
+}
+
+
 /**********************************************************************/
 
 FileSystem::FileSystem(const char* host, tPort port) :

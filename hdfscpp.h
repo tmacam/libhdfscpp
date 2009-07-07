@@ -106,6 +106,17 @@ public:
      */
     tSize Read(void* buffer, tSize length);
 
+    /**Positional read of data from an open file.
+     * @param position Position from which to read
+     * @param buffer The buffer to copy read bytes into.
+     * @param length The length of the buffer.
+     * @return Returns the number of bytes actually read.
+     * @throw HDFSError on error.
+     */
+    tSize Pread(tOffset position, void* buffer, tSize length);
+
+
+
     /**Get the number of bytes that can be read from this
      * input stream without blocking.
      *

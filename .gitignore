@@ -2,3 +2,5 @@
 hdfsls
 .*.swp
 hdfsread
+hdfslistblocks
+hdfsdumpreader

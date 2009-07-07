@@ -7,15 +7,15 @@ JAVA_HOME=/usr/lib/jvm/java-6-sun
 JAVA_INCLUDES = -m32 -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
 JAVA_LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server  -ljvm -shared -m32 -Wl,-x 
 
-HADOOP_HOME=/home/speed/tmacam/hadoop-64bits/hadoop
+HADOOP_HOME=/home/speed/hadoop/hadoop-64bits/hadoop
 HADOOP_INCLUDES = -I${HADOOP_HOME}/src/c++/libhdfs
 
-CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES)
+CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES) -g -O0
 LDFLAGS = -L${HADOOP_HOME}/libhdfs
-LDLIBS   = -lhdfs 
+LDLIBS   = -lhdfs -lz
 
 
-all: hdfsls hdfsread hdfslistblocks
+all: hdfsls hdfsread hdfslistblocks hdfsdumpreader
 
 hdfsls: hdfsls.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
@@ -24,6 +24,9 @@ hdfsread: hdfsread.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 hdfslistblocks: hdfslistblocks.o hdfscpp.o
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+hdfsdumpreader: hdfsdumpreader.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 .PHONY: clean all

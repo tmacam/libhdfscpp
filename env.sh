@@ -7,7 +7,7 @@ JAVA_HOME=/usr/lib/jvm/java-6-sun
 JRE_PATH=${JAVA_HOME}/jre/lib/i386/
 LIBJVM_PATH=${JRE_PATH}/server/:${JRE_PATH}/client/
 
-HADOOP_HOME=/home/speed/tmacam/hadoop-64bits/hadoop/
+HADOOP_HOME=/home/speed/hadoop/hadoop-64bits/hadoop/
 HADOOP_CONF_DIR=${HADOOP_HOME}/conf
 HDFS_LIB_DIR=${HADOOP_HOME}/libhdfs
 
