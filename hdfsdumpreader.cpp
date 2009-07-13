@@ -71,7 +71,6 @@ HdfsDumpReader::HdfsDumpReader(hdfs::FileSystem* fs, const char* path,
     hdfs::FileInfoList file_info;
     fs_->GetPathInfo(path, &file_info);
     file_size_ = file_info->mSize;
-    std::cout << "Constructor " << file_.Available() << std::endl;
 }
 
 bool HdfsDumpReader::HasNext()
@@ -83,9 +82,8 @@ bool HdfsDumpReader::HasNext()
 
 tmacam::filebuf HdfsDumpReader::GetNext()
 {
-    // Missing closures?
-    /* First of all, remember that this code originally was  something along
-     * the lines:
+    /* First of all, remember that this code originally was something like
+     * this:
      *
      * for (bytes_read_ = 0; bytes_read_ < file_size_;) {
      *   (...)
@@ -119,6 +117,7 @@ tmacam::filebuf HdfsDumpReader::GetNext()
     size_t data_left_len = available_data_.len();
 
     try {
+        // Try to read a full pkt (hdr + payload + crc trailer)
         assert(data_left_len);
         const char* pkt_start = available_data_.current;
         // Read header, payload and CRC. Abort if payload is too big
@@ -139,63 +138,68 @@ tmacam::filebuf HdfsDumpReader::GetNext()
         // Ok, pkt content was read and is sane. Return it.
         size_t pkt_len = data_left_len - available_data_.len();
         return tmacam::filebuf(pkt_start, pkt_len);
-        std::cout << "P: " <<  payload_len << std::endl;
     } catch(std::out_of_range) {
-        std::cout << "ooops " <<  std::endl;
-        // not enough data... 
-        // rewind reading position
+        // Ooops! Not enough data... 
+        // rewind reading position and reset available_data_
         bytes_read_ -= data_left_len;
+        available_data_ = empty_file_buffer_;
         // and retry
         return GetNext();
     }
 }
 
-void HdfsDumpReader::ReadFile()
-{
-    size_t data_left_len = 0;
-
-    for (bytes_read_ = 0; bytes_read_ < file_size_;) {
-        /* Using Pread() and exceptions for doing this is ugly and lame.
-         * We should have used Read() and proper tests but, you know what,
-         * this works and is easy to understand -- and this scores +1 in
-         * my book.
-         */
-        tSize read_length = file_.Pread(bytes_read_, &buffer_[0], buffer_size_);
-        bytes_read_ += read_length;
-
-        available_data_ = tmacam::filebuf(&buffer_[0], read_length);
-
-        std::cout << "READ " << read_length << std::endl;
-
-        try {
-            while (!available_data_.eof()) {
-                // Save current progress
-                data_left_len = available_data_.len();
-                // Read header, payload and CRC. Abort if payload is too big
-                int32_t payload_len = ReadInt(&available_data_);
-                assert(payload_len + 2*sizeof(int32_t) < buffer_size_);
-                const char* payload_data = available_data_.read(payload_len);
-                int32_t expected_checksum = ReadInt(&available_data_);
-#ifndef DUMPREADER_FAST_PASS
-                // Calc CRC32
-                uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
-                if (expected_checksum != static_cast<int32_t>(crc)) {
-                    std::cerr << "CRC MISSMATCH -- found " << crc << 
-                        " expected" << expected_checksum <<
-                        std::endl; 
-                    exit(EXIT_FAILURE);
-                }
-#endif
-                std::cout << "P: " <<  payload_len << std::endl;
-            }
-        } catch(std::out_of_range) {
-            std::cout << "ooops " <<  std::endl;
-            // not enough data... 
-            // rewind reading position
-            bytes_read_ -= data_left_len;
-        }
-    }
-}
+/* 
+ * void HdfsDumpReader::ReadFile()
+ * {
+ *     size_t data_left_len = 0;
+ * 
+ *     for (bytes_read_ = 0; bytes_read_ < file_size_;) {
+ *         !* Using Pread() and exceptions for doing this is ugly and lame.
+ *          * We should have used Read() and proper tests but, you know what,
+ *          * this works and is easy to understand -- and this scores +1 in
+ *          * my book.
+ *          *!
+ *         tSize read_length = file_.Pread(bytes_read_,
+ *                                         &buffer_[0],
+ *                                         buffer_size_);
+ *         bytes_read_ += read_length;
+ * 
+ *         available_data_ = tmacam::filebuf(&buffer_[0], read_length);
+ * 
+ *         std::cout << "READ " << read_length << std::endl;
+ * 
+ *         try {
+ *             while (!available_data_.eof()) {
+ *                 // Save current progress
+ *                 data_left_len = available_data_.len();
+ *                 // Read header, payload and CRC. Abort if payload is too big
+ *                 int32_t payload_len = ReadInt(&available_data_);
+ *                 assert(payload_len + 2*sizeof(int32_t) < buffer_size_);
+ *                 const char* payload_data = available_data_.read(payload_len);
+ *                 int32_t expected_checksum = ReadInt(&available_data_);
+ * #ifndef DUMPREADER_FAST_PASS
+ *                 // Calc CRC32
+ *                 uLong crc = crc32(0L,
+ *                                   (const Bytef*)payload_data,
+ *                                   payload_len);
+ *                 if (expected_checksum != static_cast<int32_t>(crc)) {
+ *                     std::cerr << "CRC MISSMATCH -- found " << crc << 
+ *                         " expected" << expected_checksum <<
+ *                         std::endl; 
+ *                     exit(EXIT_FAILURE);
+ *                 }
+ * #endif
+ *                 std::cout << "P: " <<  payload_len << std::endl;
+ *             }
+ *         } catch(std::out_of_range) {
+ *             std::cout << "ooops " <<  std::endl;
+ *             // not enough data... 
+ *             // rewind reading position
+ *             bytes_read_ -= data_left_len;
+ *         }
+ *     }
+ * }
+ */
 
 
 }; // namespace tmacam
@@ -207,6 +211,37 @@ void ShowUsage()
 {
     std::cerr << "Usage: hdfsls <path> " << std::endl;
 }
+
+void ProcessFile(tmacam::hdfs::FileSystem* fs, const char* path)
+{
+    using namespace tmacam;
+
+    HdfsDumpReader reader(fs, path);
+    while(reader.HasNext()) {
+        reader.GetNext();
+        std::cout << ".";
+        std::cout.flush();
+    }
+    std::cout<< std::endl;
+}
+
+void ProcessDirectory(tmacam::hdfs::FileSystem* fs, const char* path)
+{
+    using namespace tmacam;
+
+    hdfs::FileInfoList files;
+    fs->ListDirectory(path, &files);
+    if (files.empty()) {
+        std::cout << "Directory is empty" << std::endl;
+    } else {
+        for (int i = 0; i < files.size(); ++i) {
+            std::cout << "# " << files[i].mName << std::endl;
+            ProcessFile(fs, files[i].mName);
+        }
+    }
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -230,18 +265,21 @@ int main(int argc, char* argv[])
     }
     hdfs::FileInfoList path_info;
     fs.GetPathInfo(path, &path_info);
-    if (path_info->mKind != kObjectKindFile ) {
-        std::cerr << "Path '" << path << "' is not a regular file."
-                  << std::endl;
-        exit(EXIT_FAILURE);
+    switch (path_info->mKind) {
+        case kObjectKindFile:
+            // reader.ReadFile();
+            ProcessFile(&fs, path);
+            break;
+        case kObjectKindDirectory:
+            ProcessDirectory(&fs, path);
+            break;
+        default:
+            std::cerr << "Path '" << path << "' is not a regular file " <<
+                "nor a directory." << std::endl;
+            exit(EXIT_FAILURE);
+            break;
     }
 
-    HdfsDumpReader reader(&fs, path);
-
-    reader.ReadFile();
-
-
-    
 	return 0;
 }
 
