@@ -6,6 +6,40 @@
 #include "hdfsdumpreader.h"
 
 #include <iostream>
+#include <vector>
+#include <string>
+#include <assert.h>
+#include <algorithm>
+
+/**Retrieve a sorted list of the entries inside a given directory
+ *
+ * @param fs FileSystem handle
+ * @param path Path to be checked. Should be a directory.
+ * @param files Vector through which the file list will be returned.
+ *
+ */
+void ListDirectoryEntries(tmacam::hdfs::FileSystem* fs, const char* path, 
+        std::vector<std::string>* files)
+{
+    using namespace tmacam;
+
+    assert(files);
+    files->clear();
+
+    // We are dealing with a directory.. right? XXX check
+
+    hdfs::FileInfoList info_list;
+    fs->ListDirectory(path, &info_list);
+    if (info_list.empty()) { 
+        return;
+    } else {
+        files->reserve(info_list.size());
+        for (int i = 0; i < info_list.size(); ++i) {
+            files->push_back(info_list[i].mName);
+        }
+        std::sort(files->begin(), files->end());
+    }
+}
 
 void ShowUsage()
 {
@@ -29,6 +63,7 @@ void ProcessDirectory(tmacam::hdfs::FileSystem* fs, const char* path)
 {
     using namespace tmacam;
 
+
     hdfs::FileInfoList files;
     fs->ListDirectory(path, &files);
     if (files.empty()) {
@@ -37,6 +72,22 @@ void ProcessDirectory(tmacam::hdfs::FileSystem* fs, const char* path)
         for (int i = 0; i < files.size(); ++i) {
             std::cout << "# " << files[i].mName << std::endl;
             ProcessFile(fs, files[i].mName);
+        }
+    }
+}
+
+void ProcessDirectory2(tmacam::hdfs::FileSystem* fs, const char* path)
+{
+    using namespace tmacam;
+
+    std::vector<std::string> files;
+    ListDirectoryEntries(fs, path, &files);
+    if (files.empty()) {
+        std::cout << "Directory is empty" << std::endl;
+    } else {
+        for (int i = 0; i < files.size(); ++i) {
+            std::cout << "# " << files[i] << std::endl;
+            ProcessFile(fs, files[i].c_str());
         }
     }
 }
@@ -71,7 +122,7 @@ int main(int argc, char* argv[])
             ProcessFile(&fs, path);
             break;
         case kObjectKindDirectory:
-            ProcessDirectory(&fs, path);
+            ProcessDirectory2(&fs, path);
             break;
         default:
             std::cerr << "Path '" << path << "' is not a regular file " <<
