@@ -14,8 +14,9 @@ CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES) -g -O0
 LDFLAGS = -L${HADOOP_HOME}/libhdfs
 LDLIBS   = -lhdfs -lz
 
+TARGETS = hdfsls hdfsread hdfslistblocks hdfsdumper
 
-all: hdfsls hdfsread hdfslistblocks hdfsdumpreader
+all: $(TARGETS)
 
 hdfsls: hdfsls.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
@@ -26,10 +27,10 @@ hdfsread: hdfsread.o hdfscpp.o
 hdfslistblocks: hdfslistblocks.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-hdfsdumpreader: hdfsdumpreader.o hdfscpp.o
+hdfsdumper: hdfsdumper.o hdfsdumpreader.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 .PHONY: clean all
 
 clean:
-	rm -fv *.o hdfsls hdfsread
+	rm -fv *.o $(TARGETS)

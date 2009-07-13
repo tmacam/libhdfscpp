@@ -1,14 +1,14 @@
-#include "hdfscpp.h"
+
+#include "hdfsdumpreader.h"
+
+#include <assert.h>
+#include <zlib.h>
 
 #include <iostream>
 
-#include <assert.h>
 
-#include "filebuf.h"
-#include <vector>
-
-#include <zlib.h>
 /**********************************************************************/
+
 
 /** Reads a int written by java's DataOutput#writeInt
  *
@@ -25,35 +25,6 @@ inline int32_t ReadInt(tmacam::filebuf* data) {
 /**********************************************************************/
 namespace tmacam {
 
-class HdfsDumpReader {
-public:
-    static const size_t kDefaultBufferSize =  10<<20; // 10 MB
-
-    HdfsDumpReader(hdfs::FileSystem* fs,
-                   const char* path,
-                   size_t buffer_size = kDefaultBufferSize);
-
-    bool HasNext();
-
-    tmacam::filebuf GetNext();
-
-    void ReadFile();
-private:
-    hdfs::FileSystem* fs_;
-    std::string path_;
-    hdfs::File file_;
-    tOffset file_size_;
-    size_t buffer_size_;
-    std::vector<char> buffer_;
-    // Used for iteration control and state-keeping
-    size_t bytes_read_;
-    tmacam::filebuf available_data_;
-    const tmacam::filebuf empty_file_buffer_;
-
-    // No copy, no atribution and no default constructor for this class
-    DISALLOW_COPY_AND_ASSIGN(HdfsDumpReader);
-    HdfsDumpReader();
-};
 
 
 HdfsDumpReader::HdfsDumpReader(hdfs::FileSystem* fs, const char* path,
@@ -148,6 +119,8 @@ tmacam::filebuf HdfsDumpReader::GetNext()
     }
 }
 
+// Code left for historical and documentational purposes.
+
 /* 
  * void HdfsDumpReader::ReadFile()
  * {
@@ -204,83 +177,5 @@ tmacam::filebuf HdfsDumpReader::GetNext()
 
 }; // namespace tmacam
 
-/**********************************************************************/
-
-
-void ShowUsage()
-{
-    std::cerr << "Usage: hdfsls <path> " << std::endl;
-}
-
-void ProcessFile(tmacam::hdfs::FileSystem* fs, const char* path)
-{
-    using namespace tmacam;
-
-    HdfsDumpReader reader(fs, path);
-    while(reader.HasNext()) {
-        reader.GetNext();
-        std::cout << ".";
-        std::cout.flush();
-    }
-    std::cout<< std::endl;
-}
-
-void ProcessDirectory(tmacam::hdfs::FileSystem* fs, const char* path)
-{
-    using namespace tmacam;
-
-    hdfs::FileInfoList files;
-    fs->ListDirectory(path, &files);
-    if (files.empty()) {
-        std::cout << "Directory is empty" << std::endl;
-    } else {
-        for (int i = 0; i < files.size(); ++i) {
-            std::cout << "# " << files[i].mName << std::endl;
-            ProcessFile(fs, files[i].mName);
-        }
-    }
-}
-
-
-
-int main(int argc, char* argv[])
-{
-    using namespace tmacam;
-
-    // Check command line arguments
-    if ( argc != 2) {
-        std::cerr << "Wrong number of arguments" << std::endl;
-        ShowUsage();
-        exit(EXIT_FAILURE);
-    }
-    const char* path = argv[1];
-
-    // Connect to HDFS / get filesystem handle
-    hdfs::FileSystem fs; 
-
-    // Path is a file, right?
-    if (!fs.Exists(path)) {
-        std::cerr << "Path '" << path << "' does not exist." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    hdfs::FileInfoList path_info;
-    fs.GetPathInfo(path, &path_info);
-    switch (path_info->mKind) {
-        case kObjectKindFile:
-            // reader.ReadFile();
-            ProcessFile(&fs, path);
-            break;
-        case kObjectKindDirectory:
-            ProcessDirectory(&fs, path);
-            break;
-        default:
-            std::cerr << "Path '" << path << "' is not a regular file " <<
-                "nor a directory." << std::endl;
-            exit(EXIT_FAILURE);
-            break;
-    }
-
-	return 0;
-}
 
 // vim: et ai sts=4 ts=4 sw=4

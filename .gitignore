@@ -4,3 +4,4 @@ hdfsls
 hdfsread
 hdfslistblocks
 hdfsdumpreader
+hdfsdumper
