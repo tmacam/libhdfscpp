@@ -107,6 +107,7 @@ tmacam::filebuf HdfsDumpReader::GetNext()
      */
 
     assert(HasNext()); // Simplify corner cases for the next if
+
     // Do we need to perform a read operation? Can we perform a read?
     if (available_data_.eof() && (bytes_read_ < file_size_)) {
         tSize read_length = file_.Pread(bytes_read_, &buffer_[0], buffer_size_);
@@ -114,8 +115,39 @@ tmacam::filebuf HdfsDumpReader::GetNext()
         available_data_ = tmacam::filebuf(&buffer_[0], read_length);
     }
 
-    
-    return tmacam::filebuf();
+    // Save current progress
+    size_t data_left_len = available_data_.len();
+
+    try {
+        assert(data_left_len);
+        const char* pkt_start = available_data_.current;
+        // Read header, payload and CRC. Abort if payload is too big
+        int32_t payload_len = ReadInt(&available_data_);
+        assert(payload_len + 2*sizeof(int32_t) < buffer_size_);
+        const char* payload_data = available_data_.read(payload_len);
+        int32_t expected_checksum = ReadInt(&available_data_);
+#ifndef DUMPREADER_FAST_PASS
+        // Calc CRC32
+        uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
+        if (expected_checksum != static_cast<int32_t>(crc)) {
+            std::cerr << "CRC MISSMATCH -- found " << crc << 
+                " expected" << expected_checksum <<
+                std::endl; 
+            exit(EXIT_FAILURE);
+        }
+#endif
+        // Ok, pkt content was read and is sane. Return it.
+        size_t pkt_len = data_left_len - available_data_.len();
+        return tmacam::filebuf(pkt_start, pkt_len);
+        std::cout << "P: " <<  payload_len << std::endl;
+    } catch(std::out_of_range) {
+        std::cout << "ooops " <<  std::endl;
+        // not enough data... 
+        // rewind reading position
+        bytes_read_ -= data_left_len;
+        // and retry
+        return GetNext();
+    }
 }
 
 void HdfsDumpReader::ReadFile()
