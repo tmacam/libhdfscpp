@@ -10,7 +10,7 @@ JAVA_LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server  -ljvm -shared -m32 -Wl,
 HADOOP_HOME=/home/speed/hadoop/hadoop-64bits/hadoop
 HADOOP_INCLUDES = -I${HADOOP_HOME}/src/c++/libhdfs
 
-CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES) -g -O0
+CXXFLAGS   =  $(HADOOP_INCLUDES) $(JAVA_INCLUDES) -g -O0 -shared -fPIC
 LDFLAGS = -L${HADOOP_HOME}/libhdfs
 LDLIBS   = -lhdfs -lz
 
@@ -27,7 +27,11 @@ hdfsread: hdfsread.o hdfscpp.o
 hdfslistblocks: hdfslistblocks.o hdfscpp.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-hdfsdumper: hdfsdumper.o hdfsdumpreader.o hdfscpp.o
+# http://makepp.sourceforge.net/1.19/makepp_cookbook.html#Do%20you%20really%20need%20a%20library%3f
+hdfsdumpreader_module.o: hdfsdumpreader.o hdfscpp.o
+	$(LD) -r -o $@ $^
+
+hdfsdumper: hdfsdumper.o hdfsdumpreader_module.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 .PHONY: clean all
