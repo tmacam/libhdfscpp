@@ -11,35 +11,20 @@
 #include <assert.h>
 #include <algorithm>
 
-/**Retrieve a sorted list of the entries inside a given directory
+#include <zlib.h>
+
+/** Reads a int written by java's DataOutput#writeInt
  *
- * @param fs FileSystem handle
- * @param path Path to be checked. Should be a directory.
- * @param files Vector through which the file list will be returned.
- *
+ * FIXME Move to propper namespace
  */
-void ListDirectoryEntries(tmacam::hdfs::FileSystem* fs, const char* path, 
-        std::vector<std::string>* files)
-{
-    using namespace tmacam;
-
-    assert(files);
-    files->clear();
-
-    // We are dealing with a directory.. right? XXX check
-
-    hdfs::FileInfoList info_list;
-    fs->ListDirectory(path, &info_list);
-    if (info_list.empty()) { 
-        return;
-    } else {
-        files->reserve(info_list.size());
-        for (int i = 0; i < info_list.size(); ++i) {
-            files->push_back(info_list[i].mName);
-        }
-        std::sort(files->begin(), files->end());
-    }
+inline int32_t ReadInt(tmacam::filebuf* data) {
+	assert(sizeof(int32_t) == 4);
+	const char* bytes = data->read(sizeof(int32_t));
+	return (((bytes[0] & 0xff) << 24) | ((bytes[1] & 0xff) << 16) |
+		 ((bytes[2] & 0xff) << 8) | (bytes[3] & 0xff));
 }
+
+
 
 void ShowUsage()
 {
@@ -52,7 +37,23 @@ void ProcessFile(tmacam::hdfs::FileSystem* fs, const char* path)
 
     HdfsDumpReader reader(fs, path);
     while(reader.HasNext()) {
-        reader.GetNext();
+        filebuf full_pkt = reader.GetNext();
+        
+        // Confirm we are receiving the whole thing
+        int32_t payload_len = ReadInt(&full_pkt);
+        const char* payload_data = full_pkt.read(payload_len);
+        int32_t expected_checksum = ReadInt(&full_pkt);
+#ifndef DUMPREADER_FAST_PASS
+        // Calc CRC32
+        uLong crc = crc32(0L, (const Bytef*)payload_data, payload_len);
+        if (expected_checksum != static_cast<int32_t>(crc)) {
+            std::cerr << "CRC MISSMATCH -- found " << crc << 
+                " expected" << expected_checksum <<
+                std::endl; 
+            exit(EXIT_FAILURE);
+        }
+#endif
+
         std::cout << ".";
         std::cout.flush();
     }

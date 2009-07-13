@@ -168,6 +168,32 @@ void GetFileBlockLocations(hdfsFS fs, const char* path, tOffset start,
 }
 
 
+void ListDirectoryEntries(tmacam::hdfs::FileSystem* fs, const char* path, 
+        std::vector<std::string>* files)
+{
+    using namespace tmacam;
+
+    assert(files);
+    files->clear();
+
+    // We are dealing with a directory.. right? XXX check
+
+    hdfs::FileInfoList info_list;
+    fs->ListDirectory(path, &info_list);
+    if (info_list.empty()) { 
+        return;
+    } else {
+        files->reserve(info_list.size());
+        for (int i = 0; i < info_list.size(); ++i) {
+            files->push_back(info_list[i].mName);
+        }
+        std::sort(files->begin(), files->end());
+    }
+}
+
+
+
+
 }; // namespace hdfs
 }; // namespace tmacam
 

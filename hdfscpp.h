@@ -185,6 +185,16 @@ private:
 void GetFileBlockLocations(hdfsFS fs, const char* path, tOffset start,
         tOffset size, BlockLocationList* blocks_location);
 
+/**Retrieve a sorted list of the entries inside a given directory
+ *
+ * @param fs FileSystem handle
+ * @param path Path to be checked. Should be a directory.
+ * @param files Vector through which the file list will be returned.
+ *
+ */
+void ListDirectoryEntries(FileSystem* fs, const char* path, 
+        std::vector<std::string>* files);
+
 
 }; // namespace hdfs
 }; // namespace tmacam

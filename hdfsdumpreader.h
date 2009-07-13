@@ -16,6 +16,7 @@ public:
 
     bool HasNext();
 
+    // Return a full pkt (hdr + payload + crc trailer)
     tmacam::filebuf GetNext();
 
 private:
