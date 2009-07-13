@@ -3,9 +3,10 @@
 OS_ARCH=i386
 PLATFORM=linux
 JAVA_HOME=/usr/lib/jvm/java-6-sun
+N_BITS=32
 
-JAVA_INCLUDES = -m32 -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
-JAVA_LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server  -ljvm -shared -m32 -Wl,-x 
+JAVA_INCLUDES = -m$(N_BITS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
+JAVA_LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server  -ljvm -shared -m$(N_BITS) -Wl,-x 
 
 HADOOP_HOME=/home/speed/hadoop/hadoop-64bits/hadoop
 HADOOP_INCLUDES = -I${HADOOP_HOME}/src/c++/libhdfs

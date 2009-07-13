@@ -15,3 +15,4 @@ export CLASSPATH=${HADOOP_CONF_DIR}:$(ls ${HADOOP_HOME}/hadoop*core*jar| head -1
 
 export LD_LIBRARY_PATH=${LIBJVM_PATH}:${HDFS_LIB_DIR}:${LD_LIBRARY_PATH}
 
+N_BITS=32
