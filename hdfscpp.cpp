@@ -191,7 +191,25 @@ void ListDirectoryEntries(tmacam::hdfs::FileSystem* fs, const char* path,
     }
 }
 
+void ReadFullHDFSFile(FileSystem* fs, const char* path,
+        std::vector<char>* file_data) 
+{
 
+	FileInfoList file_info;
+	fs->GetPathInfo(path, &file_info);
+	tSize file_size = file_info->mSize;
+	std::vector<char> buffer(file_size);
+
+	File file(*fs, path, O_RDONLY);
+	tSize bytes_read = 0;
+	while (bytes_read < file_size) {
+		tSize read_length = 0;
+        read_length = file.Read(&buffer[bytes_read], file_size - bytes_read);
+		bytes_read += read_length;
+	}
+    // Replace file_data contents with the contents read from the file
+	file_data->swap(buffer);
+}
 
 
 }; // namespace hdfs

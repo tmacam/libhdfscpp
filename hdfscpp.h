@@ -195,6 +195,15 @@ void GetFileBlockLocations(hdfsFS fs, const char* path, tOffset start,
 void ListDirectoryEntries(FileSystem* fs, const char* path, 
         std::vector<std::string>* files);
 
+/**Retrieves the full content of a file
+ *
+ * @param fs FileSystem handle
+ * @param path Path to the file we want to read
+ * @param file_info The contents of this vector will be overwritten with the
+ *  contents of path.
+ */
+void ReadFullHDFSFile(FileSystem* fs, const char* path,
+        std::vector<char>* file_data);
 
 }; // namespace hdfs
 }; // namespace tmacam
