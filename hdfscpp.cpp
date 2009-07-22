@@ -89,8 +89,24 @@ tSize File::Pread(tOffset position, void* buffer, tSize length)
 /**********************************************************************/
 
 FileSystem::FileSystem(const char* host, tPort port) :
+    host_(NULL),
+    host_str_copy_(""),
+    port_(port),
     fs_(hdfsConnect(host, port))
 {
+    /* Host parameter can be NULL but std::strings can't be constructed with
+     * std::string(NULL). So, only copy the contents of the host parameter
+     * to host_str_copy_ and only make host_ point to the internal contents
+     * of host_str_copy_ IFF the provided host is not NULL.
+     * */
+    if (host) {
+        host_str_copy_ = std::string(host);
+        host_ = host_str_copy_.c_str();
+    } else {
+        host_ = NULL;
+    }
+
+    /* Was the filesystem properly initiated? */
     if (!fs_) {
         throw HDFSError("Error during HDFS connect");
     }
@@ -98,9 +114,17 @@ FileSystem::FileSystem(const char* host, tPort port) :
 
 FileSystem::~FileSystem() {
     if (fs_) {
-        if (hdfsDisconnect(fs_) ) {
+        if (hdfsDisconnect(fs_)) {
             throw HDFSError("Failed during hdfsDisconnect()");
         }
+    }
+}
+
+void FileSystem::Reconnect() {
+    hdfsDisconnect(fs_); // ignore return -- we really don't care at this point
+    fs_ = hdfsConnect(host_, port_);
+    if (!fs_) {
+        throw HDFSError("Error during HDFS reconnect (@ FileSystem::Reconnect())");
     }
 }
 

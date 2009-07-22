@@ -1,0 +1,41 @@
+--- Makefile.orig	2009-07-22 14:21:59.000000000 -0300
++++ Makefile	2009-07-21 18:51:23.000000000 -0300
+@@ -21,14 +21,25 @@
+ # c) OS_ARCH
+ # d) LIBHDFS_BUILD_DIR
+ # All these are passed by build.xml.
+-#
++
++
++# BEGIN tmacam
++OS_ARCH=amd64
++PLATFORM=linux
++JAVA_HOME=/usr/lib/jvm/java-6-sun
++N_BITS=64
++LIBHDFS_BUILD_DIR=/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/lib
++# execute com 
++#    LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/amd64/server/' make
++# END tmacam
+ 
+ CC = gcc
+ LD = gcc
+ CFLAGS =  -g -Wall -O2 -fPIC
+-LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server -ljvm -shared -m32 -Wl,-x 
+-PLATFORM = $(shell echo $$OS_NAME | tr [A-Z] [a-z])
+-CPPFLAGS = -m32 -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
++LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server -ljvm -shared -m$(N_BITS) -Wl,-x 
++#PLATFORM = $(shell echo $$OS_NAME | tr [A-Z] [a-z]) -=- tmacam edited
++PLATFORM=linux
++CPPFLAGS = -m$(N_BITS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
+ 
+ LIB_NAME = hdfs
+ SO_NAME = lib$(LIB_NAME).so
+@@ -60,7 +71,7 @@
+ 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+ 
+ $(HDFS_TEST): hdfs_test.c
+-	$(CC) $(CPPFLAGS) $< -L$(LIBHDFS_BUILD_DIR) -l$(LIB_NAME) -o $@
++	$(CC) $(CPPFLAGS) $< -Wl,-rpath,. -L$(LIBHDFS_BUILD_DIR) -l$(LIB_NAME) -o $@
+ 
+ $(HDFS_READ_TEST): hdfs_read.c
+ 	$(CC) $(CPPFLAGS) $< -Wl,-rpath,. -L$(LIBHDFS_BUILD_DIR) -l$(LIB_NAME) -o $@ 

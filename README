@@ -1,0 +1,12 @@
+
+What tha hell is this?
+======================
+
+TBD
+
+
+How to run those programs
+=========================
+
+LD_LIBRARY_PATH=$(cat LDLIBPATH.txt) CLASSPATH=$(cat CLASSPATH.txt) ./hdfsread /user/hadoop/friends-txt-DELME2/part-00001
+

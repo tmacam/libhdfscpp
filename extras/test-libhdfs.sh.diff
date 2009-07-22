@@ -1,0 +1,48 @@
+--- test-libhdfs.sh.orig	2009-07-22 14:22:10.000000000 -0300
++++ test-libhdfs.sh	2009-07-21 18:51:44.000000000 -0300
+@@ -24,6 +24,14 @@
+ # All these are passed by build.xml.
+ #
+ 
++# BEGIN tmacam
++export LIBHDFS_BUILD_DIR='/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/lib/'
++export LD_LIBRARY_PATH='$(LIBHDFS_BUILD_DIR):/usr/lib/jvm/java-6-sun/jre/lib/amd64/server/:'
++export HADOOP_HOME=/home/speed/hadoop/hadoop-64bits/hadoop
++export HADOOP_LOG_DIR=/tmp/
++export JAVA_HOME=/usr/lib/jvm/java-6-sun
++# END tmacam
++
+ HDFS_TEST=hdfs_test
+ HADOOP_LIB_DIR=$HADOOP_HOME/lib
+ HADOOP_BIN_DIR=$HADOOP_HOME/bin
+@@ -55,6 +63,9 @@
+ IFS=
+ 
+ # add libs to CLASSPATH
++for f in $HADOOP_HOME/*.jar; do
++  CLASSPATH=${CLASSPATH}:$f;
++done
+ for f in $HADOOP_HOME/lib/*.jar; do
+   CLASSPATH=${CLASSPATH}:$f;
+ done
+@@ -69,15 +80,15 @@
+ # Put delays to ensure hdfs is up and running and also shuts down 
+ # after the tests are complete
+ cd $HADOOP_HOME
+-echo Y | $HADOOP_BIN_DIR/hadoop namenode -format &&
+-$HADOOP_BIN_DIR/hadoop-daemon.sh start namenode && sleep 2 && 
+-$HADOOP_BIN_DIR/hadoop-daemon.sh start datanode && sleep 2 && 
++# tmacam -=- echo Y | $HADOOP_BIN_DIR/hadoop namenode -format &&
++# tmacam -=- $HADOOP_BIN_DIR/hadoop-daemon.sh start namenode && sleep 2 && 
++# tmacam -=-  $HADOOP_BIN_DIR/hadoop-daemon.sh start datanode && sleep 2 && 
+ echo CLASSPATH=$HADOOP_CONF_DIR:$CLASSPATH LD_PRELOAD="$LIBHDFS_BUILD_DIR/libhdfs.so" $LIBHDFS_BUILD_DIR/$HDFS_TEST && 
+ CLASSPATH=$HADOOP_CONF_DIR:$CLASSPATH LD_PRELOAD="$LIBHDFS_BUILD_DIR/libhdfs.so" $LIBHDFS_BUILD_DIR/$HDFS_TEST
+ BUILD_STATUS=$?
+ sleep 3
+-$HADOOP_BIN_DIR/hadoop-daemon.sh stop datanode && sleep 2 && 
+-$HADOOP_BIN_DIR/hadoop-daemon.sh stop namenode && sleep 2 
++# tmacam -=-  $HADOOP_BIN_DIR/hadoop-daemon.sh stop datanode && sleep 2 && 
++# tmacam -=- $HADOOP_BIN_DIR/hadoop-daemon.sh stop namenode && sleep 2 
+ 
+ echo exiting with $BUILD_STATUS
+ exit $BUILD_STATUS

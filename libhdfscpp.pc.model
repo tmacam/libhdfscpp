@@ -1,0 +1,18 @@
+# This is not an optimum pkg-config file because there are not .pc files
+# for java or libhdfs and because this is my first try with pkg-config
+prefix=%PREFIX%
+libdir = ${prefix}
+includedir = ${prefix}
+
+Name: LibHDFSCPP                            # human-readable name
+Description: C++ wrapper for libhdfs with a RAII scent # human-readable desc.
+Version: 0.0.1
+URL: http://github.com/tmacam
+Requires: 
+Conflicts: 
+Libs: -L${libdir} -lhdfscpp %LDFLAGS%
+Cflags: %CXXFLAGS% -I${includedir} %CPPFLAGS%
+# Since there is no usable dependency for this pkg-config, Libs.private are
+# included manually in Libs
+#Libs.private: -lhdfs -ljvm
+

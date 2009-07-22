@@ -160,7 +160,17 @@ public:
      */
     bool Exists(const char* path);
 
+
+    /**Do a forcefull reconection of the filesystem .
+     *
+     * Don't use this function unless necessary.
+     */
+    void Reconnect();
+
 private:
+    const char* host_;
+    std::string host_str_copy_; //<! hosts points to me IFF it is not NULL
+    tPort port_;
     hdfsFS fs_;
     DISALLOW_COPY_AND_ASSIGN(FileSystem);
 };
