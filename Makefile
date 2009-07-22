@@ -16,20 +16,20 @@ CXXFLAGS =  -g -Wall -O0 -fPIC
 CPPFLAGS =  $(LIBHDFS_INCLUDES) $(JAVA_INCLUDES)
 LDFLAGS = $(LIBHDFS_LDFLAGS) $(JAVA_LDFLAGS)
 
-TARGETS = hdfscpp.so hdfsls hdfsread hdfslistblocks hdfsdumper LDLIBPATH.txt libhdfscpp.pc
+TARGETS = libhdfscpp.so hdfsls hdfsread hdfslistblocks hdfsdumper LDLIBPATH.txt libhdfscpp.pc
 
 all: $(TARGETS)
 
-hdfscpp.so: hdfscpp.cpp hdfscpp.h filebuf.h
+libhdfscpp.so: hdfscpp.cpp hdfscpp.h filebuf.h
 	$(CXX) -o $@ -shared $(CPPFLAGS) $(CXXFLAGS) $< 
 
-hdfsls: hdfsls.o hdfscpp.so
+hdfsls: hdfsls.o libhdfscpp.so
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-hdfsread: hdfsread.o hdfscpp.so
+hdfsread: hdfsread.o libhdfscpp.so
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-hdfslistblocks: hdfslistblocks.o hdfscpp.so
+hdfslistblocks: hdfslistblocks.o libhdfscpp.so
 	$(CXX) $(LDFLAGS) $^ -o $@
 
 # http://makepp.sourceforge.net/1.19/makepp_cookbook.html#Do%20you%20really%20need%20a%20library%3f
@@ -37,7 +37,7 @@ hdfslistblocks: hdfslistblocks.o hdfscpp.so
 hdfsdumpreader_module.o: hdfsdumpreader.o hdfscpp.o
 	$(LD) -r $^ -o $@ 
 
-hdfsdumper: hdfsdumper.o hdfsdumpreader_module.o
+hdfsdumper: hdfsdumper.o hdfsdumpreader.o hdfscpp.so
 	$(CXX) $(LDFLAGS) -lz $^ -o $@
 
 LDLIBPATH.txt:Makefile
