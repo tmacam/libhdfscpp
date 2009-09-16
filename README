@@ -10,3 +10,15 @@ How to run those programs
 
 LD_LIBRARY_PATH=$(cat LDLIBPATH.txt) CLASSPATH=$(cat CLASSPATH.txt) ./hdfsread /user/hadoop/friends-txt-DELME2/part-00001
 
+
+libHDFS references
+==================
+
+    - http://hadoop.apache.org/common/docs/r0.20.0/libhdfs.html
+    - http://wiki.apache.org/hadoop/HDFS-APIs
+    - file:///home/speed/tmacam/hadoop-64bits/hadoop-0.18.3/libhdfs/docs/api/hdfs_8h.html
+    - http://community.abiquo.com/display/ADP/Using+libhdfs
+    - http://hadoop.apache.org/common/docs/r0.20.0/api/org/apache/hadoop/fs/FileSystem.html
+
+
+# vim:syn=rst et ai sts=4 ts=4 sw=4:
