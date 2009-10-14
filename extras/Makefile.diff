@@ -8,10 +8,11 @@
 +
 +
 +# BEGIN tmacam
-+OS_ARCH=amd64   # or i386
++# for i386 use OS_ARCH=i386 and N_BITS=32
++OS_ARCH=amd64
 +PLATFORM=linux
 +JAVA_HOME=/usr/lib/jvm/java-6-sun
-+N_BITS=64       # or 32
++N_BITS=64
 +LIBHDFS_DEST_DIR=/usr/local/libhdfs-0.18.3/
 +LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
 +LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/include
