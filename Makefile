@@ -1,14 +1,36 @@
-
+# Copyright 2009 Tiago Alves Macambira
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # From Hadoop's libhdfs Makefile
+#
+# BEGIN User customizable settings. Edit to match your settings
 OS_ARCH=amd64
 PLATFORM=linux
 JAVA_HOME=/usr/lib/jvm/java-6-sun
-N_BITS=64
+N_BITS=32
+
+LIBHDFS_HOME=/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/
+
+HADOOP_HOME=/usr/local/hadoop-0.18.3
+
+# END User customizable setings.
+#
+# You probably don't need to touch the lines bellow. 
 
 JAVA_INCLUDES = -m$(N_BITS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(PLATFORM)
 JAVA_LDFLAGS = -L$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server  -ljvm -m$(N_BITS)
 
-LIBHDFS_HOME=/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/
 LIBHDFS_INCLUDES = -I${LIBHDFS_HOME}/include
 LIBHDFS_LDFLAGS = -L${LIBHDFS_HOME}/lib -lhdfs
 
@@ -16,7 +38,7 @@ CXXFLAGS =  -g -Wall -O0 -fPIC
 CPPFLAGS =  $(LIBHDFS_INCLUDES) $(JAVA_INCLUDES)
 LDFLAGS = $(LIBHDFS_LDFLAGS) $(JAVA_LDFLAGS)
 
-TARGETS = libhdfscpp.so hdfsls hdfsread hdfslistblocks hdfsdumper LDLIBPATH.txt libhdfscpp.pc
+TARGETS = libhdfscpp.so hdfsls hdfsread hdfslistblocks hdfsdumper LDLIBPATH.txt  CLASSPATH.txt libhdfscpp.pc
 
 all: $(TARGETS)
 
@@ -42,6 +64,10 @@ hdfsdumper: hdfsdumper.o hdfsdumpreader.o hdfscpp.so
 
 LDLIBPATH.txt:Makefile
 	echo ${LIBHDFS_HOME}/lib:$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server > .$@.tmp
+	mv .$@.tmp $@
+
+CLASSPATH.txt: build_classpath.sh
+	./build_classpath.sh $(HADOOP_HOME) $(JAVA_HOME) > .$@.tmp
 	mv .$@.tmp $@
 
 libhdfscpp.pc: libhdfscpp.pc.model Makefile

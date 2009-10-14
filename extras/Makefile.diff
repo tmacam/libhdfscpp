@@ -1,6 +1,6 @@
---- Makefile.orig	2009-07-22 14:21:59.000000000 -0300
-+++ Makefile	2009-07-21 18:51:23.000000000 -0300
-@@ -21,14 +21,25 @@
+--- Makefile.orig	2009-10-14 17:14:56.000000000 -0300
++++ Makefile	2009-10-14 17:12:51.000000000 -0300
+@@ -21,14 +21,27 @@
  # c) OS_ARCH
  # d) LIBHDFS_BUILD_DIR
  # All these are passed by build.xml.
@@ -8,12 +8,14 @@
 +
 +
 +# BEGIN tmacam
-+OS_ARCH=amd64
++OS_ARCH=amd64   # or i386
 +PLATFORM=linux
 +JAVA_HOME=/usr/lib/jvm/java-6-sun
-+N_BITS=64
-+LIBHDFS_BUILD_DIR=/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/lib
-+# execute com 
++N_BITS=64       # or 32
++LIBHDFS_DEST_DIR=/usr/local/libhdfs-0.18.3/
++LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
++LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/include
++# execute with 
 +#    LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/amd64/server/' make
 +# END tmacam
  
@@ -30,7 +32,7 @@
  
  LIB_NAME = hdfs
  SO_NAME = lib$(LIB_NAME).so
-@@ -60,7 +71,7 @@
+@@ -60,7 +73,7 @@
  	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
  $(HDFS_TEST): hdfs_test.c
@@ -39,3 +41,13 @@
  
  $(HDFS_READ_TEST): hdfs_read.c
  	$(CC) $(CPPFLAGS) $< -Wl,-rpath,. -L$(LIBHDFS_BUILD_DIR) -l$(LIB_NAME) -o $@ 
+@@ -74,5 +87,9 @@
+ test: $(HDFS_TEST)
+ 	./tests/test-libhdfs.sh	
+ 
++install:
++	mkdir -vp $(LIBHDFS_INCLUDES_DIR)
++	cp -v hdfs.h $(LIBHDFS_INCLUDES_DIR)
++
+ # vim: sw=4: ts=4: noet
+ 

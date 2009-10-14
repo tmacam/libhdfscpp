@@ -5,3 +5,4 @@ hdfsread
 hdfslistblocks
 hdfsdumpreader
 hdfsdumper
+*.so

@@ -2,13 +2,90 @@
 What tha hell is this?
 ======================
 
-TBD
+This is library (and some test programs) to help use Hadoop's HDFS C API
+with C++ programs.
 
+Most classes follow a RAII idiom and, when errors are detected,
+exceptions are thrown.
+
+The code is hosted on http://github.com/tmacam/libhdfscpp and is
+distributed under the Apache 2.0 license.
+
+Dependencies
+============
+
+ * zlib (tested with ubuntu version 1:1.2.3.3.dfsg-7ubuntu1)
+
+   For debian and Ubuntu installing the package zlib1g-dev should do.
+
+ * Hadoop == 0.18.3
+   
+   AFAIK, we are only compatible with this particular version of hadoop
+   --- at least with this version libhdfs C API.
+
+ * libhdfs
+   
+   Although this is part of the hadoop distribution and that pre-build
+   binaries for this lib are shipped with hadoop distribution, it's
+   better to *rebuild* this library from source.
+
+   Here is how:
+
+    - libhdfs is inside `src/c++/libhdfs/`, in Hadoop's distribution.
+
+    - Inside the `extras` directory in libhdfscpp distribution there are
+      two patches. Copy `Makefile.diff` to libhdfs source directory.
+
+    - Edit `Makefile.diff` you just copied. Modify the parts between `+#
+      BEGIN tmacam` and `+# END tmacam` to make sense for your
+      installation settings. In my last install, I was compiling for a
+      i386 instalation, so, this is what I got in that section of the
+      file::
+
+        +# BEGIN tmacam
+        +OS_ARCH=i386
+        +PLATFORM=linux
+        +JAVA_HOME=/usr/lib/jvm/java-6-sun
+        +N_BITS=32
+        +LIBHDFS_DEST_DIR=/home/tmacam/projects/libhdfs-0.18.3/
+        +LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
+        +LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/lib
+        +# execute com 
+        +#    LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
+        +# END tmacam
+
+    - Apply Makefile's patch
+        patch Makefile < Makefile.diff 
+
+    - Build it, modifing LD_LIBRARY_PATH to point to your JVM lib
+      location::
+
+        LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
+        LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make install
+
+Building
+========
+
+
+Edit `Makefile`, applying changes similar to those made while building
+libhdfs. In sum, you have to configure OS_ARCH, PLATFORM, JAVA_HOME,
+N_BITS and LIBHDFS_HOME.
+   
 
 How to run those programs
 =========================
 
-LD_LIBRARY_PATH=$(cat LDLIBPATH.txt) CLASSPATH=$(cat CLASSPATH.txt) ./hdfsread /user/hadoop/friends-txt-DELME2/part-00001
+There are lot's os library dependencies, libraries not in the default
+search path, classes not in Java's default CLASSPATH --- it is a royal
+PITA to run programs compiled with libhdfs and, for that matter, with
+libhdfscpp. Thus, recommend running programs that use libhdfscpp as
+follow::
+
+    LD_LIBRARY_PATH=$(cat LDLIBPATH.txt) CLASSPATH=$(cat CLASSPATH.txt) ./hdfsread /user/hadoop/friends-txt-DELME2/part-00001
+
+
+Notice that both `LDLIBPATH.txt` and  `CLASSPATH.txt` are produced by
+`libhdfscpp`'s Makefile.
 
 
 libHDFS references
@@ -21,4 +98,4 @@ libHDFS references
     - http://hadoop.apache.org/common/docs/r0.20.0/api/org/apache/hadoop/fs/FileSystem.html
 
 
-# vim:syn=rst et ai sts=4 ts=4 sw=4:
+# vim:syn=rst et ai sts=4 ts=4 sw=4 tw=72:
