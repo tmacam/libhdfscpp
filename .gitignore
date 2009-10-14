@@ -6,3 +6,7 @@ hdfslistblocks
 hdfsdumpreader
 hdfsdumper
 *.so
+CLASSPATH.txt
+LDLIBPATH.txt
+libhdfscpp.pc
+

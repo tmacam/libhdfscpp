@@ -15,14 +15,15 @@
 # From Hadoop's libhdfs Makefile
 #
 # BEGIN User customizable settings. Edit to match your settings
-OS_ARCH=amd64
+#For amd64 use OS_ARCH=amd64 and N_BITS=64
+OS_ARCH=i386
 PLATFORM=linux
 JAVA_HOME=/usr/lib/jvm/java-6-sun
-N_BITS=32
+N_BITS=32 
 
-LIBHDFS_HOME=/home/speed/hadoop/hadoop-64bits/libhdfs-0.18.3/
+LIBHDFS_HOME=/home/tmacam/projects/libhdfs-0.18.3/
 
-HADOOP_HOME=/usr/local/hadoop-0.18.3
+HADOOP_HOME=/home/tmacam/projects/hadoop-0.18.3/
 
 # END User customizable setings.
 #
@@ -59,14 +60,14 @@ hdfslistblocks: hdfslistblocks.o libhdfscpp.so
 hdfsdumpreader_module.o: hdfsdumpreader.o hdfscpp.o
 	$(LD) -r $^ -o $@ 
 
-hdfsdumper: hdfsdumper.o hdfsdumpreader.o hdfscpp.so
+hdfsdumper: hdfsdumper.o hdfsdumpreader.o libhdfscpp.so
 	$(CXX) $(LDFLAGS) -lz $^ -o $@
 
 LDLIBPATH.txt:Makefile
-	echo ${LIBHDFS_HOME}/lib:$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server > .$@.tmp
+	echo ${LIBHDFS_HOME}/lib:$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server:`pwd` > .$@.tmp
 	mv .$@.tmp $@
 
-CLASSPATH.txt: build_classpath.sh
+CLASSPATH.txt: Makefile build_classpath.sh
 	./build_classpath.sh $(HADOOP_HOME) $(JAVA_HOME) > .$@.tmp
 	mv .$@.tmp $@
 

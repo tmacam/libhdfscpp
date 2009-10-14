@@ -88,6 +88,12 @@ Notice that both `LDLIBPATH.txt` and  `CLASSPATH.txt` are produced by
 `libhdfscpp`'s Makefile.
 
 
+About pkg-config support
+========================
+
+We produce a simple but functional .pc use with pkg-config.
+
+
 libHDFS references
 ==================
 
