@@ -1,9 +1,9 @@
 
-What tha hell is this?
-======================
+What is all this for?
+=====================
 
-This is library (and some test programs) to help use Hadoop's HDFS C API
-with C++ programs.
+This is a small library (and some test programs) whose purpose help use
+Hadoop's HDFS C API with C++ programs.
 
 Most classes follow a RAII idiom and, when errors are detected,
 exceptions are thrown.
@@ -16,30 +16,32 @@ Dependencies
 
  * zlib (tested with ubuntu version 1:1.2.3.3.dfsg-7ubuntu1)
 
-   For debian and Ubuntu installing the package zlib1g-dev should do.
+   For Debian and Ubuntu installing the package `zlib1g-dev` should do.
 
- * Hadoop == 0.18.3
+ * Hadoop HDFS (version == 0.18.3)
    
-   AFAIK, we are only compatible with this particular version of hadoop
-   --- at least with this version libhdfs C API.
+   AFAIK, we are only compatible with this particular version of Hadoop
+   --- at least with this version `libhdfs` C API.
+
 
  * libhdfs
    
-   Although this is part of the hadoop distribution and that pre-build
-   binaries for this lib are shipped with hadoop distribution, it's
-   better to *rebuild* this library from source.
+   Although this is part of the Hadoop distribution and despite the fact
+   that pre-built binaries for this lib are shipped with Hadoop
+   distribution, it is better to *rebuild* this library from source.
 
    Here is how:
 
-    - libhdfs is inside `src/c++/libhdfs/`, in Hadoop's distribution.
+    - `libhdfs` source code is inside `src/c++/libhdfs/`, in Hadoop's
+      distribution.
 
-    - Inside the `extras` directory in libhdfscpp distribution there are
-      two patches. Copy `Makefile.diff` to libhdfs source directory.
+    - Inside the `extras` directory in `libhdfscpp` distribution there are
+      two patches. Copy `Makefile.diff` to `libhdfs` source directory.
 
     - Edit `Makefile.diff` you just copied. Modify the parts between `+#
       BEGIN tmacam` and `+# END tmacam` to make sense for your
-      installation settings. In my last install, I was compiling for a
-      i386 instalation, so, this is what I got in that section of the
+      installation settings. In my last install, I was compiling it for a
+      i386 installation, so, this is what I got in that section of the
       file::
 
         +# BEGIN tmacam
@@ -54,10 +56,11 @@ Dependencies
         +#    LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
         +# END tmacam
 
-    - Apply Makefile's patch
+    - Apply Makefile's patch::
+
         patch Makefile < Makefile.diff 
 
-    - Build it, modifing LD_LIBRARY_PATH to point to your JVM lib
+    - Build it, modifying LD_LIBRARY_PATH to point to your JVM lib
       location::
 
         LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
@@ -67,22 +70,22 @@ Building
 ========
 
 
-Edit `Makefile`, applying changes similar to those made while building
-libhdfs. In sum, you have to configure OS_ARCH, PLATFORM, JAVA_HOME,
-N_BITS and LIBHDFS_HOME.
+Edit `libhdfscpp`'s `Makefile`, applying changes similar to those made
+while building `libhdfs`. In sum, you have to configure OS_ARCH,
+PLATFORM, JAVA_HOME, N_BITS and LIBHDFS_HOME. Those settings are right
+at the top of the Makefile.
    
 
 How to run those programs
 =========================
 
-There are lot's os library dependencies, libraries not in the default
+There are lots of library dependencies, libraries not in the default
 search path, classes not in Java's default CLASSPATH --- it is a royal
 PITA to run programs compiled with libhdfs and, for that matter, with
-libhdfscpp. Thus, recommend running programs that use libhdfscpp as
+libhdfscpp. Thus, we recommend running programs that use libhdfscpp as
 follow::
 
     LD_LIBRARY_PATH=$(cat LDLIBPATH.txt) CLASSPATH=$(cat CLASSPATH.txt) ./hdfsread /user/hadoop/friends-txt-DELME2/part-00001
-
 
 Notice that both `LDLIBPATH.txt` and  `CLASSPATH.txt` are produced by
 `libhdfscpp`'s Makefile.
