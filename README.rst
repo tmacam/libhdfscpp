@@ -38,41 +38,51 @@ Dependencies
     - Inside the `extras` directory in `libhdfscpp` distribution there are
       two patches. Copy `Makefile.diff` to `libhdfs` source directory.
 
-    - Edit `Makefile.diff` you just copied. Modify the parts between `+#
-      BEGIN tmacam` and `+# END tmacam` to make sense for your
+    - Go to `libhdfs` directory and apply Makefile's patch::
+
+        cd $HADOOP_HOME/src/c++/libhdfs
+        cp Makefile Makefile.orig
+        patch Makefile < Makefile.diff 
+
+    - Edit `Makefile` you just copied. Modify the parts between `#
+      BEGIN tmacam` and `# END tmacam` to make sense for your
       installation settings. In my last install, I was compiling it for a
       i386 installation, so, this is what I got in that section of the
       file::
 
-        +# BEGIN tmacam
-        +OS_ARCH=i386
-        +PLATFORM=linux
-        +JAVA_HOME=/usr/lib/jvm/java-6-sun
-        +N_BITS=32
-        +LIBHDFS_DEST_DIR=/home/tmacam/projects/libhdfs-0.18.3/
-        +LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
-        +LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/lib
-        +# execute com 
-        +#    LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
-        +# END tmacam
+        # BEGIN tmacam
+        # for i386 use OS_ARCH=i386 and N_BITS=32
+        OS_ARCH=i386
+        N_BITS=32
+        # for amd64 us OS_ARCH=amd64 and N_BITS=64
+        #OS_ARCH=amd64
+        #N_BITS=64
+        PLATFORM=linux
+        JAVA_HOME=/usr/lib/jvm/java-6-sun
+        LIBHDFS_DEST_DIR=/usr/local/libhdfs-0.18.3/
+        LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
+        LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/lib
+        #
+        # execute 'make help' to see build instructions
+        #
+        # END tmacam
 
-    - Apply Makefile's patch::
-
-        patch Makefile < Makefile.diff 
-
-    - Build it, modifying LD_LIBRARY_PATH to point to your JVM lib
-      location::
+    - To build it, first run `make help`. It will produce an output
+      similar to this::
 
         LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make
         LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/i386/server/' make install
+      All you have to do is run these commands.
+
+    - Notice: this Makefile expects a JDK from Sun.
 
 Building
 ========
 
 
 Edit `libhdfscpp`'s `Makefile`, applying changes similar to those made
-while building `libhdfs`. In sum, you have to configure OS_ARCH,
-PLATFORM, JAVA_HOME, N_BITS and LIBHDFS_HOME. Those settings are right
+while building `libhdfs`. In sum, you have to configure `OS_ARCH`,
+`PLATFORM`, `JAVA_HOME`, `N_BITS` and `LIBHDFS_HOME`. Those settings are right
 at the top of the Makefile.
    
 
