@@ -1,5 +1,5 @@
---- Makefile.orig	2010-04-26 15:23:40.000000000 -0300
-+++ Makefile	2010-04-26 16:02:00.000000000 -0300
+--- Makefile.orig	2010-04-26 16:18:14.507434488 -0300
++++ Makefile.new	2010-04-27 14:45:16.073688832 -0300
 @@ -23,12 +23,32 @@
  # All these are passed by build.xml.
  #
@@ -17,9 +17,9 @@
 +LIBHDFS_DEST_DIR=/usr/local/libhdfs-0.18.3/
 +LIBHDFS_BUILD_DIR=$(LIBHDFS_DEST_DIR)/lib
 +LIBHDFS_INCLUDES_DIR=$(LIBHDFS_DEST_DIR)/include
-+# execute with 
-+#  LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/amd64/server/' make
-+#  LD_LIBRARY_PATH='/usr/lib/jvm/java-6-sun/jre/lib/amd64/server/' make install
++#
++# execute 'make help' to see build instructions
++#
 +# END tmacam
 +
 +
@@ -45,13 +45,19 @@
  
  $(HDFS_READ_TEST): hdfs_read.c
  	$(CC) $(CPPFLAGS) $< -Wl,-rpath,. -L$(LIBHDFS_BUILD_DIR) -l$(LIB_NAME) -o $@ 
-@@ -74,5 +94,9 @@
+@@ -74,5 +94,15 @@
  test: $(HDFS_TEST)
  	./tests/test-libhdfs.sh	
  
 +install:
 +	mkdir -vp $(LIBHDFS_INCLUDES_DIR)
 +	cp -v hdfs.h $(LIBHDFS_INCLUDES_DIR)
++
++help:
++	@echo LD_LIBRARY_PATH=$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server make
++	@echo LD_LIBRARY_PATH=$(JAVA_HOME)/jre/lib/$(OS_ARCH)/server make install
++
++.PHONY: help install
 +	
  # vim: sw=4: ts=4: noet
  
